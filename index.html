@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Cable Fault Dashboard — Static Image BG</title>
+<title>Cable Fault Dashboard — Modern Shapes</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,18 +39,26 @@
     --muted: #94A3B8; /* Medium Gray */
   }
   
+  /* --- Page Load Animation --- */
+  @keyframes card-fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(15px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
   html, body {
     height: 100%;
     margin: 0;
     font-family: 'Inter', Arial, Helvetica, sans-serif;
     background-color: var(--bg);
     
-    /* MODIFIED: Replaced gradients with a still image.
-      Replace this URL with your own image! 
-    */
     background-image: url('https://images.unsplash.com/photo-1511149755252-35875b273fd6?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fGxpZ2h0bmluZ3xlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&q=60&w=600,abstract,technology,blur');
     
-    /* Ensure the image covers the screen and stays fixed */
     background-size: cover;
     background-position: center center;
     background-repeat: no-repeat;
@@ -60,13 +68,10 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-
-  /* REMOVED @keyframes moveGradient */
   
   /* Glassmorphism Header */
   header {
     padding: 12px 24px;
-    /* Base glass + subtle sheen */
     background-image: 
       linear-gradient(90deg, rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.4)), 
       radial-gradient(circle at 10% 50%, rgba(255, 255, 255, 0.08), transparent 70%);
@@ -142,24 +147,30 @@
   
   /* Glassmorphism Card with internal gradient glow */
   .card {
-    /* Base glass + internal glow */
     background-image: 
       linear-gradient(135deg, rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.3)),
       radial-gradient(circle at top left, var(--card-glow, var(--accent-glow)), transparent 70%);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--border);
-    border-radius: 12px;
+    
+    /* --- MODIFIED: Softer, more modern "squircle" shape --- */
+    border-radius: 20px;
+    
     box-shadow: 0 4px 30px var(--shadow);
     padding: 16px;
     min-height: 100px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    transition: all 0.2s ease;
+    
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    animation: card-fade-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+    animation-delay: var(--delay, 0s); /* We'll set this delay below */
   }
   .card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-5px); 
     box-shadow: 0 8px 40px var(--shadow);
   }
 
@@ -217,9 +228,9 @@
     margin-left: 4px;
   }
   
-  /* New "Glow" Fault Animation */
+  /* "Glow" Fault Animation */
   .fault-fast {
-    animation: fault-glow 0.8s ease-in-out 1;
+    animation: fault-glow 0.6s cubic-bezier(0.4, 0, 0.2, 1) 1;
   }
   @keyframes fault-glow {
     0%, 100% {
@@ -232,52 +243,52 @@
     }
   }
 
+  /* --- MODIFIED: Big Relay Button Styling --- */
   .relay-card {
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    text-align: center;
+    /* Add transition for press and state change */
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), 
+                background-image 0.3s ease, 
+                box-shadow 0.3s ease;
   }
-  .relay-status-text {
+  .relay-card:active {
+    transform: translateY(-2px) scale(0.98); /* Press-in effect */
+  }
+  
+  /* Override icon color to match relay theme */
+  .relay-card .icon {
+    background: linear-gradient(135deg, #a78bfa, #7c3aed); /* Purple */
+    margin-bottom: 4px;
+  }
+  
+  .relay-card .relay-status-text {
     font-size: 1.1rem;
     font-weight: 500;
     color: var(--muted);
-    margin-top: 4px;
+    margin-top: 4px; /* Reset margin */
   }
 
-  /* Themed Switch */
-  .toggle {
-    width: 40px;
-    height: 22px;
-    border-radius: 999px;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid var(--border);
-    padding: 3px;
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
+  /* "On" state for the button */
+  .relay-card.on {
+    --card-glow: var(--accent-glow); /* Use accent glow */
   }
+  .relay-card.on .icon {
+    background: linear-gradient(135deg, var(--accent), var(--teal));
+  }
+  /* --- End of Relay Button Styling --- */
   
-  .knob {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: #E2E8F0;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-    transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-    transform: translateX(0px);
-  }
+
+  /* --- REMOVED: Toggle switch CSS is no longer needed --- */
+  /* .toggle { ... } */
+  /* .knob { ... } */
+  /* .toggle.on { ... } */
+  /* .toggle.on .knob { ... } */
   
-  /* Gradient for toggle "on" state */
-  .toggle.on {
-    background: linear-gradient(90deg, var(--accent), var(--teal));
-    border-color: var(--accent);
-  }
-  
-  .toggle.on .knob {
-    background: #FFFFFF;
-    transform: translateX(18px);
-  }
   
   /* Charts area */
   .charts {
@@ -290,8 +301,10 @@
   /* Chart Card with internal gradient glow */
   .chart-card {
     padding: 16px;
-    border-radius: 12px;
-    /* Base glass + internal glow */
+    
+    /* --- MODIFIED: Softer, more modern "squircle" shape --- */
+    border-radius: 20px; 
+
     background-image: 
       linear-gradient(135deg, rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.3)),
       radial-gradient(circle at top left, var(--accent-glow), transparent 70%);
@@ -299,7 +312,23 @@
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--border);
     box-shadow: 0 4px 30px var(--shadow);
+    
+    animation: card-fade-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+    animation-delay: var(--delay, 0s);
   }
+
+  /* Staggered load-in delays */
+  .grid .card:nth-child(1) { --delay: 0.1s; }
+  .grid .card:nth-child(2) { --delay: 0.15s; }
+  .grid .card:nth-child(3) { --delay: 0.2s; }
+  .grid .card:nth-child(4) { --delay: 0.25s; }
+  .grid .card:nth-child(5) { --delay: 0.3s; }
+  
+  .charts .chart-card:nth-child(1) { --delay: 0.35s; }
+  .charts .chart-card:nth-child(2) { --delay: 0.4s; }
+  .charts .chart-card:nth-child(3) { --delay: 0.45s; }
+  .charts .chart-card:nth-child(4) { --delay: 0.5s; }
+
   .chart-header {
     display: flex;
     justify-content: space-between;
@@ -330,31 +359,30 @@
   }
   
   /* -------------------------
-     Tablet Breakpoint
-     ------------------------- */
+       Tablet Breakpoint
+       ------------------------- */
   @media (max-width: 980px) {
     .grid { grid-template-columns: repeat(2, 1fr); }
     .charts { grid-template-columns: 1fr; }
   }
   
   /* -------------------------
-     Smartphone Breakpoint (OPTIMIZED)
-     ------------------------- */
+       Smartphone Breakpoint (OPTIMIZED)
+       ------------------------- */
   @media (max-width: 560px) {
     .grid { grid-template-columns: 1fr; }
     .charts { grid-template-columns: 1fr; }
     canvas { height: 180px !important; }
     
-    /* Header optimization */
     header { 
       flex-direction: column; 
       gap: 12px; 
       padding: 16px 12px; 
-      align-items: center; /* Center stacked items */
+      align-items: center;
     }
     .header-title { font-size: 1.2rem; }
     .indicators { 
-      flex-wrap: wrap; /* Allow pills to wrap */
+      flex-wrap: wrap;
       justify-content: center; 
     }
 
@@ -362,15 +390,13 @@
     .grid, .charts { gap: 12px; }
     .charts { margin-top: 12px; }
     
-    /* Card text size optimization */
     .val { font-size: 1.6rem; }
     .title { font-size: 0.85rem; }
 
-    /* Relay card layout optimization */
+    /* --- MODIFIED: Ensure relay button text centers on mobile --- */
     .relay-card {
-      flex-direction: column;
-      align-items: flex-start; /* Align text & toggle to the left */
-      gap: 12px;
+      align-items: center; /* Keep centered */
+      gap: 8px;
     }
   }
 </style>
@@ -455,16 +481,15 @@
       </div>
     </div>
     
-    <div class="card relay-card">
+    <div id="relayCard" class="card relay-card" role="button" tabindex="0" aria-pressed="false" title="Toggle relay">
+      <div class="icon">
+        <i class="fas fa-power-off"></i> </div>
       <div>
         <div class="title">Relay Control</div>
         <div id="relayLabel" class="relay-status-text">CIRCUIT CLOSED</div>
       </div>
-      <div id="relay" class="toggle" role="button" tabindex="0" aria-pressed="false" title="Toggle relay">
-        <div class="knob"></div>
-      </div>
     </div>
-  </section>
+    </section>
 
   <section class="charts">
     <div class="chart-card">
@@ -525,7 +550,9 @@ const volCard = document.getElementById('volCard'), curCard = document.getElemen
 const volStatus = document.getElementById('volS'), curStatus = document.getElementById('curS'),
       tmpStatus = document.getElementById('tmpS'), lekStatus = document.getElementById('lekS');
 
-const relay = document.getElementById('relay'), relayLabel = document.getElementById('relayLabel');
+/* --- MODIFIED: 'relay' now points to the entire card via its new ID --- */
+const relay = document.getElementById('relayCard'), 
+      relayLabel = document.getElementById('relayLabel');
 
 /* chart history stores (full history) */
 const MAX_HISTORY = 300;
@@ -538,30 +565,35 @@ const history = {
 
 /* visible window state per chart */
 function makeWindowState() {
-  return { start: 0, size: 60 }; // show last 60 points by default
+  return { start: 0, size: 60 };
 }
 const windowState = { voltage: makeWindowState(), current: makeWindowState(), temp: makeWindowState(), leak: makeWindowState() };
 
-/* create charts (Updated for Glassmorphism Theme) */
+/* create charts */
 function makeChart(ctx, colorA, colorB) {
   return new Chart(ctx, {
     type: 'line',
     data: { labels: [], datasets: [{ data: [], borderColor: colorA, backgroundColor: colorB, tension: 0.25, fill: true, pointRadius: 1, borderWidth: 2 }] },
     options: {
       responsive: true,
-      animation: { duration: 200 },
+      animation: {
+        duration: 400,
+        easing: 'cubic-bezier(0.4, 0, 0.2, 1)' 
+      },
+      transitions: {
+        'default': {
+          animation: {
+            duration: 400,
+            easing: 'cubic-bezier(0.4, 0, 0.2, 1)'
+          }
+        }
+      },
       plugins: { legend: { display: false } },
       scales: {
         x: {
           display: true,
           type: 'time',
-          time: {
-            unit: 'second',
-            tooltipFormat: 'T',
-            displayFormats: {
-              second: 'HH:mm:ss'
-            }
-          },
+          time: { unit: 'second', tooltipFormat: 'T', displayFormats: { second: 'HH:mm:ss' } },
           ticks: { color: '#94A3B8' }, 
           grid: { color: 'rgba(255, 255, 255, 0.05)' } 
         },
@@ -582,24 +614,24 @@ const chLeak = makeChart(document.getElementById('chartLeak').getContext('2d'), 
 
 const charts = { voltage: chVolt, current: chCurr, temp: chTemp, leak: chLeak };
 
-/* quick fault visual (Updated for Glassmorphism Theme) */
+/* quick fault visual */
 function quickFaultVisual(cardEl, chart) {
   cardEl.classList.add('fault-fast');
   const canvas = chart.canvas;
   const orig = canvas.style.backgroundColor;
-  canvas.style.transition = 'background-color 0.12s linear';
+  canvas.style.transition = 'background-color 0.2s ease-out';
   canvas.style.backgroundColor = 'rgba(248, 113, 113, 0.1)';
   setTimeout(() => { canvas.style.backgroundColor = orig; }, 260);
   setTimeout(() => { cardEl.classList.remove('fault-fast'); }, 800);
 }
 
-/* update UI values + charts (Updated for Glassmorphism Theme) */
+/* update UI values + charts */
 function applyData(obj) {
   const v = Number(obj.voltage ?? obj.Voltage ?? obj.V ?? 0);
   const c = Number(obj.current ?? obj.Current ?? obj.I ?? 0);
   const t = Number(obj.temperature ?? obj.Temperature ?? obj.temp ?? 0);
   const l = Number(obj.leakage_current ?? obj.leakage ?? obj.Leakage ?? 0);
-  const relay = obj.relay_status ?? obj.relay ?? obj.Relay ?? obj.relay_status ?? obj.manual_relay ?? 'CLOSED';
+  const relay_data = obj.relay_status ?? obj.relay ?? obj.Relay ?? obj.relay_status ?? obj.manual_relay ?? 'CLOSED';
   
   const now = Date.now();
 
@@ -619,7 +651,7 @@ function applyData(obj) {
     if (w.start >= maxStart - 1) {
       w.start = Math.max(0, h.labels.length - w.size);
     }
-    refreshChartSimple(key);
+    refreshChartSimple(key, 'default');
   }
 
   if (v < TH.voltage) { setFaultUI(volCard, volStatus, true, 'LOW'); quickFaultVisual(volCard, chVolt); } else setFaultUI(volCard, volStatus, false, 'NORMAL');
@@ -631,11 +663,11 @@ function applyData(obj) {
   sys.innerHTML = any ? '<i class="fas fa-exclamation-triangle"></i> FAULT' : '<i class="fas fa-check-circle"></i> SYSTEM NORMAL';
   sys.style.color = any ? '#F87171' : '#4ADE80';
 
-  const isOpen = (String(relay).toUpperCase() === 'OPEN' || Number(relay) === 1 || String(relay) === '1');
+  const isOpen = (String(relay_data).toUpperCase() === 'OPEN' || Number(relay_data) === 1 || String(relay_data) === '1');
   setRelayUI(isOpen);
 }
 
-/* set fault UI text/color (Updated for Glassmorphism Theme) */
+/* set fault UI text/color */
 function setFaultUI(card, statusEl, isFault, text) {
   if (isFault) {
     card.classList.add('fault');
@@ -648,7 +680,8 @@ function setFaultUI(card, statusEl, isFault, text) {
   }
 }
 
-/* set relay UI (Updated for Glassmorphism Theme) */
+/* --- UNCHANGED: This function now works on the card element --- */
+/* set relay UI */
 function setRelayUI(on) {
   if (on) {
     relay.classList.add('on');
@@ -663,7 +696,7 @@ function setRelayUI(on) {
   }
 }
 
-/* Firebase connection indicator (Updated for Glassmorphism Theme) */
+/* Firebase connection indicator */
 const connRef = db.ref('.info/connected');
 connRef.on('value', s => {
   const v = s.val();
@@ -678,7 +711,7 @@ connRef.on('value', s => {
 
 
 /* =======================================================
-  UNCHANGED LOGIC SECTION: All core functionality
+  LOGIC SECTION
   =======================================================
 */
 
@@ -691,7 +724,7 @@ function pushHistory(key, label, value) {
 }
 
 /* apply visible window slices to chart and update */
-function refreshChartSimple(key) {
+function refreshChartSimple(key, animMode = 'none') {
   const ch = charts[key];
   const h = history[key];
   const w = windowState[key];
@@ -700,7 +733,7 @@ function refreshChartSimple(key) {
   const end = Math.min(h.labels.length, start + w.size);
   ch.data.labels = h.labels.slice(start, end);
   ch.data.datasets[0].data = h.values.slice(start, end);
-  ch.update('none');
+  ch.update(animMode);
 }
 
 /* Write relay to DB */
@@ -709,6 +742,7 @@ function writeRelay(on) {
   db.ref('relay').set(on ? 1 : 0).catch(e => console.error(e));
 }
 
+/* --- UNCHANGED: These listeners now apply to the whole card --- */
 /* Relay click */
 relay.addEventListener('click', () => {
   const currently = relay.classList.contains('on');
@@ -776,7 +810,7 @@ function attachZoomPan(canvas, key) {
       const labelDelta = Math.round(-dx / pxPerLabel);
       windowState[key].start = state.startWindowStart + labelDelta;
       clampWindow();
-      refreshChartSimple(key);
+      refreshChartSimple(key, 'none');
     } else if (e.touches.length === 2) {
       const newDist = getDistance(e.touches[0], e.touches[1]);
       const scale = state.startDist / newDist;
@@ -787,7 +821,7 @@ function attachZoomPan(canvas, key) {
       const centerStart = state.startWindowStart + Math.floor(state.startWindowSize / 2);
       windowState[key].start = centerStart - Math.floor(newSize / 2);
       clampWindow();
-      refreshChartSimple(key);
+      refreshChartSimple(key, 'none');
     }
     e.preventDefault();
   }, { passive: false });
@@ -808,7 +842,7 @@ function attachZoomPan(canvas, key) {
     const centerIndex = Math.floor(w.start + w.size * ratio);
     w.start = centerIndex - Math.floor(w.size / 2);
     if (w.start < 0) w.start = 0;
-    refreshChartSimple(key);
+    refreshChartSimple(key, 'none');
   }, { passive: false });
   
   let mouseDown = false;
@@ -823,7 +857,7 @@ function attachZoomPan(canvas, key) {
     const chartWidth = canvas.clientWidth;
     const labelDelta = Math.round(-dx / (chartWidth / Math.max(1, windowState[key].size)));
     windowState[key].start = mdStartWindowStart + labelDelta;
-    refreshChartSimple(key);
+    refreshChartSimple(key, 'none');
   });
   window.addEventListener('mouseup', e => {
     if (mouseDown) { mouseDown = false; canvas.style.cursor = 'default'; }
@@ -844,7 +878,7 @@ function fillEmptyData() {
       pushHistory(k, ts, 0);
     }
   }
-  for (const k of ['voltage', 'current', 'temp', 'leak']) refreshChartSimple(k);
+  for (const k of ['voltage', 'current', 'temp', 'leak']) refreshChartSimple(k, 'none');
 }
 fillEmptyData();
 
@@ -878,4 +912,3 @@ db.ref('manual_controls/relay_status').on('value', s => { if (s.exists()) setRel
 </script>
 </body>
 </html>
-
