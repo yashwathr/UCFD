@@ -291,7 +291,7 @@
       <label class="input-label">Gemini API Key</label>
       <input type="password" id="apiKeyInput" class="api-input" placeholder="Paste key starting with AIza...">
       <div style="font-size: 11px; color: #666; margin-top: 5px;">
-        Required for AI Diagnosis. Key is saved locally on your device.
+        Key is hardcoded but can be overridden here.
       </div>
     </div>
     <button class="save-btn" onclick="saveSettings()">Save Configuration</button>
@@ -348,9 +348,12 @@ const ui = {
   relay: { btn: document.getElementById('btnEmer'), txt: document.getElementById('txtRelay') }
 };
 
-/* --- Settings & API Key Logic --- */
+/* --- API Key Management --- */
+// HARDCODED DEFAULT KEY PROVIDED BY USER
+const DEFAULT_API_KEY = "AIzaSyDmmEqPcvJIGQrRYOIV_X8rY8NHRGbUVNY";
+
 function openSettings() {
-  const key = localStorage.getItem('gemini_api_key') || '';
+  const key = localStorage.getItem('gemini_api_key') || DEFAULT_API_KEY;
   document.getElementById('apiKeyInput').value = key;
   document.getElementById('settingsModal').classList.add('open');
 }
@@ -367,10 +370,11 @@ function saveSettings() {
 }
 
 async function diagnoseSystem() {
-  // Check for API Key first
-  const apiKey = localStorage.getItem('gemini_api_key');
+  // Use user-saved key if it exists, otherwise use the hardcoded default
+  const apiKey = localStorage.getItem('gemini_api_key') || DEFAULT_API_KEY;
+
   if(!apiKey) {
-    alert("Missing API Key! Please click the Settings gear icon and enter your Google Gemini API Key.");
+    alert("Missing API Key! Please check settings.");
     openSettings();
     return;
   }
