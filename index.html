@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#000000">
-<title>Fault Guard iOS 26</title>
+<title>Fault Guard Dashboard</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -41,7 +41,7 @@
     background: #000;
     color: #fff;
     font-family: 'Inter', sans-serif;
-    overflow: hidden; /* Prevent scroll, we use internal scroll */
+    overflow: hidden;
     height: 100vh;
   }
 
@@ -291,7 +291,11 @@
 
 <script>
 /* --- Init Firebase --- */
-const firebaseConfig = { databaseURL: "https://cablefaultdetection-77552-default-rtdb.firebaseio.com/" };
+// IMPORTANT: Updated URL to match your ESP32 Code
+const firebaseConfig = { 
+  databaseURL: "https://ucfd-31619-default-rtdb.asia-southeast1.firebasedatabase.app/" 
+};
+
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
@@ -381,6 +385,8 @@ function closeChart(e) {
 
 /* --- Data Processing --- */
 function processData(data) {
+  console.log("New Data Received:", data); // Debugging
+
   const v = Number(data.voltage || 0);
   const c = Number(data.current || 0);
   const t = Number(data.temperature || 0);
@@ -412,10 +418,11 @@ function processData(data) {
   updateHist('vol', v); updateHist('cur', c); updateHist('tmp', t); updateHist('lek', l);
 
   // If chart is open, update it live
-  if(currentChartInstance && currentChartType) {
-    currentChartInstance.data.labels = labels[currentChartType];
-    currentChartInstance.data.datasets[0].data = history[currentChartType];
-    currentChartInstance.update('none');
+  // FIXED: Changed currentChartInstance to mainChartInstance
+  if(mainChartInstance && currentChartType) {
+    mainChartInstance.data.labels = labels[currentChartType];
+    mainChartInstance.data.datasets[0].data = history[currentChartType];
+    mainChartInstance.update('none');
   }
 
   // Relay
@@ -455,23 +462,18 @@ ui.relay.btn.addEventListener('click', () => {
   setRelayVisuals(nextState);
   
   // Send to Firebase
+  // Note: We use the same path the ESP32 listens to
   db.ref('manual_controls/relay_status').set(nextState ? 'OPEN' : 'CLOSED');
-  db.ref('relay').set(nextState ? 1 : 0);
 });
 
 /* --- Firebase Listener --- */
-db.ref('sensor_data').limitToLast(1).on('child_added', s => { if(s.val()) processData(s.val()); });
-// Fallback for flat data
-db.ref('voltage').on('value', s => {
-    // In a real app, fetch all, here we just trigger update
-    processData({
-        voltage: s.val(), 
-        current: ui.c.el.textContent,
-        temperature: ui.t.el.textContent,
-        leakage_current: ui.l.el.textContent,
-        relay_status: ui.relay.txt.textContent === 'TRIPPED' ? 'OPEN' : 'CLOSED'
-    });
+// 1. Listen for the newest child added to 'sensor_data'
+// This matches how the ESP32 pushes new data nodes.
+db.ref('sensor_data').limitToLast(1).on('child_added', s => { 
+  if(s.val()) processData(s.val()); 
 });
+
+// REMOVED: The fallback listener that was reading old data from root nodes.
 
 </script>
 </body>
