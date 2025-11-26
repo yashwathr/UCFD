@@ -16,6 +16,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<!-- Markdown Parser for AI responses -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
 <style>
   :root {
@@ -26,6 +28,7 @@
     --good: #30D158;
     --bad: #FF453A;
     --warn: #FFD60A;
+    --gemini: #8E54E9; /* AI Purple */
     --text-main: #FFFFFF;
     --text-sub: rgba(235, 235, 245, 0.6);
     --spring: cubic-bezier(0.175, 0.885, 0.32, 1.1);
@@ -66,13 +69,34 @@
     display: flex; justify-content: space-between; align-items: center;
     margin-bottom: 25px;
   }
+  .brand-group {
+    display: flex; flex-direction: column;
+  }
   .brand h1 { font-size: 22px; margin: 0; letter-spacing: -0.5px; }
   .status-pill {
-    background: rgba(255,255,255,0.1); padding: 6px 12px; 
-    border-radius: 20px; font-size: 12px; font-weight: 600;
-    display: flex; gap: 6px; align-items: center;
+    margin-top: 4px;
+    background: rgba(255,255,255,0.1); padding: 4px 10px; 
+    border-radius: 20px; font-size: 11px; font-weight: 600;
+    display: inline-flex; gap: 6px; align-items: center; width: fit-content;
     backdrop-filter: blur(10px);
   }
+
+  /* AI Button */
+  .ai-btn {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    border: none;
+    border-radius: 16px;
+    padding: 8px 16px;
+    display: flex; align-items: center; gap: 8px;
+    color: #000;
+    font-weight: 700;
+    font-size: 13px;
+    box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);
+    cursor: pointer;
+    transition: transform 0.2s var(--spring);
+  }
+  .ai-btn:active { transform: scale(0.95); }
+  .ai-btn i { font-size: 14px; }
 
   /* --- Cards --- */
   .grid {
@@ -182,19 +206,22 @@
   /* STATE: ARMED (CLOSED) */
   .emer-btn.armed .emer-icon { color: var(--good); text-shadow: 0 0 10px var(--good); }
 
-  /* --- CHART MODAL (Hidden by default) --- */
+  /* --- MODALS (Shared Styles) --- */
   .modal-overlay {
     position: fixed; inset: 0; z-index: 999;
-    background: rgba(0,0,0,0.01); /* Transparent click blocker */
+    background: rgba(0,0,0,0.01); /* Transparent click blocker initially */
     display: none;
     align-items: flex-end; /* Bottom sheet */
     justify-content: center;
   }
-  .modal-overlay.open { display: flex; }
+  .modal-overlay.open { 
+    display: flex; 
+    background: rgba(0,0,0,0.4); /* Dim background when open */
+  }
 
   .modal-card {
     width: 100%; height: 65vh;
-    background: rgba(20, 20, 25, 0.9);
+    background: rgba(20, 20, 25, 0.95);
     backdrop-filter: blur(25px) saturate(180%);
     border-top-left-radius: 32px; border-top-right-radius: 32px;
     border-top: 1px solid var(--glass-border);
@@ -214,6 +241,33 @@
     display:grid; place-items: center;
   }
 
+  /* AI Modal Specifics */
+  .ai-response-area {
+    flex: 1;
+    overflow-y: auto;
+    font-size: 15px;
+    line-height: 1.6;
+    color: #eee;
+    padding-right: 5px;
+  }
+  .ai-response-area h3 { color: #00f2fe; margin-top: 0; }
+  .ai-response-area strong { color: #fff; }
+  .ai-response-area ul { padding-left: 20px; color: #ccc; }
+
+  .loading-spinner {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;
+    color: var(--text-sub);
+  }
+  .spinner {
+    width: 40px; height: 40px;
+    border: 4px solid rgba(255,255,255,0.1);
+    border-left-color: #00f2fe;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+  }
+  @keyframes spin { 100% { transform: rotate(360deg); } }
+
   canvas { width: 100% !important; height: 100% !important; }
 
   /* Animations */
@@ -228,12 +282,18 @@
 
 <div class="app">
   <header>
-    <div class="brand">
-      <h1>Fault Guard</h1>
+    <div class="brand-group">
+      <div class="brand">
+        <h1>Fault Guard</h1>
+      </div>
+      <div id="sys" class="status-pill" style="color:var(--good)">
+        <i class="fas fa-shield-alt"></i> System Normal
+      </div>
     </div>
-    <div id="sys" class="status-pill" style="color:var(--good)">
-      <i class="fas fa-shield-alt"></i> System Normal
-    </div>
+    
+    <button class="ai-btn" onclick="diagnoseSystem()">
+      <i class="fas fa-sparkles"></i> Diagnose
+    </button>
   </header>
 
   <div class="grid">
@@ -277,11 +337,12 @@
   </div>
 </div>
 
-<div id="chartModal" class="modal-overlay" onclick="closeChart(event)">
+<!-- CHART MODAL -->
+<div id="chartModal" class="modal-overlay" onclick="closeModals(event)">
   <div class="modal-card" onclick="event.stopPropagation()">
     <div class="modal-header">
-      <div class="modal-title" id="modalTitle">Voltage History</div>
-      <button class="close-btn" onclick="closeChart()"><i class="fas fa-times"></i></button>
+      <div class="modal-title" id="modalTitle">History</div>
+      <button class="close-btn" onclick="closeModals()"><i class="fas fa-times"></i></button>
     </div>
     <div style="flex:1; position: relative; width:100%;">
       <canvas id="chartMain"></canvas>
@@ -289,9 +350,29 @@
   </div>
 </div>
 
+<!-- AI DIAGNOSIS MODAL -->
+<div id="aiModal" class="modal-overlay" onclick="closeModals(event)">
+  <div class="modal-card" onclick="event.stopPropagation()" style="height: 75vh;">
+    <div class="modal-header">
+      <div class="modal-title" style="display:flex; align-items:center; gap:10px;">
+        <i class="fas fa-robot" style="color:#00f2fe"></i> AI Diagnosis
+      </div>
+      <button class="close-btn" onclick="closeModals()"><i class="fas fa-times"></i></button>
+    </div>
+    
+    <div id="aiLoading" class="loading-spinner">
+      <div class="spinner"></div>
+      <div>Analyzing telemetry...</div>
+    </div>
+
+    <div id="aiContent" class="ai-response-area" style="display:none;">
+      <!-- Gemini output goes here -->
+    </div>
+  </div>
+</div>
+
 <script>
 /* --- Init Firebase --- */
-// IMPORTANT: Updated URL to match your ESP32 Code
 const firebaseConfig = { 
   databaseURL: "https://ucfd-31619-default-rtdb.asia-southeast1.firebasedatabase.app/" 
 };
@@ -311,6 +392,74 @@ const ui = {
   relay: { btn: document.getElementById('btnEmer'), txt: document.getElementById('txtRelay') }
 };
 
+/* --- Gemini AI Logic --- */
+const apiKey = ""; // Injected by environment
+
+async function diagnoseSystem() {
+  const modal = document.getElementById('aiModal');
+  const loader = document.getElementById('aiLoading');
+  const content = document.getElementById('aiContent');
+  
+  // Show Modal & Reset
+  modal.classList.add('open');
+  loader.style.display = 'flex';
+  content.style.display = 'none';
+  content.innerHTML = '';
+
+  // Gather Readings
+  const readings = {
+    v: ui.v.el.textContent,
+    c: ui.c.el.textContent,
+    t: ui.t.el.textContent,
+    l: ui.l.el.textContent,
+    r: ui.relay.txt.textContent
+  };
+
+  // Build Prompt
+  const prompt = `
+    You are an expert electrical engineer. Analyze the following real-time telemetry from a cable fault detection system:
+    
+    - Line Voltage: ${readings.v} V (Threshold: < 10.5V is Low)
+    - Load Current: ${readings.c} A (Threshold: > 2.8A is Overcurrent, < 0.04A is Undercurrent)
+    - Core Temperature: ${readings.t} °C (Threshold: > 60°C is Overheating)
+    - Leakage Current: ${readings.l} A (Threshold: > 0.1A is Dangerous)
+    - Relay Status: ${readings.r}
+
+    Task:
+    1. Identify any faults based on thresholds.
+    2. If faults exist, explain the likely physical cause (e.g., "High leakage suggests insulation breakdown").
+    3. Recommend immediate maintenance actions.
+    4. If all systems are normal, provide a brief stability report.
+    
+    Format: Use Markdown (bolding, bullet points) for readability. Keep it concise.
+  `;
+
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }]
+      })
+    });
+
+    const data = await response.json();
+    const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "AI analysis failed. Please try again.";
+    
+    // Render Markdown
+    content.innerHTML = marked.parse(aiText);
+    
+    loader.style.display = 'none';
+    content.style.display = 'block';
+
+  } catch (error) {
+    console.error(error);
+    loader.style.display = 'none';
+    content.style.display = 'block';
+    content.innerHTML = "<p style='color:var(--bad)'>Connection Error: Could not reach AI service.</p>";
+  }
+}
+
 /* --- Charting (Single Canvas Reused) --- */
 let mainChartInstance = null;
 const ctx = document.getElementById('chartMain').getContext('2d');
@@ -329,7 +478,8 @@ function updateHist(key, val) {
 
 /* --- Modal Logic --- */
 let currentChartType = null;
-const modal = document.getElementById('chartModal');
+const chartModal = document.getElementById('chartModal');
+const aiModal = document.getElementById('aiModal');
 const modalTitle = document.getElementById('modalTitle');
 
 function openChart(type) {
@@ -375,17 +525,18 @@ function openChart(type) {
   });
 
   // Show Modal
-  modal.classList.add('open');
+  chartModal.classList.add('open');
 }
 
-function closeChart(e) {
-  modal.classList.remove('open');
+function closeModals(e) {
+  chartModal.classList.remove('open');
+  aiModal.classList.remove('open');
   currentChartType = null;
 }
 
 /* --- Data Processing --- */
 function processData(data) {
-  console.log("New Data Received:", data); // Debugging
+  // console.log("New Data Received:", data); 
 
   const v = Number(data.voltage || 0);
   const c = Number(data.current || 0);
@@ -418,7 +569,6 @@ function processData(data) {
   updateHist('vol', v); updateHist('cur', c); updateHist('tmp', t); updateHist('lek', l);
 
   // If chart is open, update it live
-  // FIXED: Changed currentChartInstance to mainChartInstance
   if(mainChartInstance && currentChartType) {
     mainChartInstance.data.labels = labels[currentChartType];
     mainChartInstance.data.datasets[0].data = history[currentChartType];
@@ -445,7 +595,6 @@ function setRelayVisuals(isOpen) {
     // EMERGENCY STATE
     btn.className = 'emer-btn tripped';
     txt.textContent = 'TRIPPED';
-    // Vibration on mobile
     if(navigator.vibrate) navigator.vibrate([200, 100, 200]);
   } else {
     // ARMED STATE
@@ -457,23 +606,14 @@ function setRelayVisuals(isOpen) {
 ui.relay.btn.addEventListener('click', () => {
   const isTripped = ui.relay.btn.classList.contains('tripped');
   const nextState = !isTripped; // Toggle
-  
-  // Optimistic UI update
   setRelayVisuals(nextState);
-  
-  // Send to Firebase
-  // Note: We use the same path the ESP32 listens to
   db.ref('manual_controls/relay_status').set(nextState ? 'OPEN' : 'CLOSED');
 });
 
 /* --- Firebase Listener --- */
-// 1. Listen for the newest child added to 'sensor_data'
-// This matches how the ESP32 pushes new data nodes.
 db.ref('sensor_data').limitToLast(1).on('child_added', s => { 
   if(s.val()) processData(s.val()); 
 });
-
-// REMOVED: The fallback listener that was reading old data from root nodes.
 
 </script>
 </body>
