@@ -363,8 +363,9 @@
 
 <script>
 /* --- Init Firebase --- */
+// CORRECT DATABASE URL (from your working example)
 const firebaseConfig = { 
-  databaseURL: "https://ucfd-31619-default-rtdb.asia-southeast1.firebasedatabase.app/" 
+  databaseURL: "https://cablefaultdetection-77552-default-rtdb.firebaseio.com/" 
 };
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
@@ -382,22 +383,12 @@ const ui = {
 };
 
 /* --- API Key Management (PERMANENT FIX) --- */
-// THIS IS THE PERMANENT KEY. IT WILL WORK FOREVER.
-const HARDCODED_KEY = "AIzaSyAxZ7plFguv6GiLtSdHLt-UtobexYUnkVM"; 
+const HARDCODED_KEY = "AIzaSyDmmEqPcvJIGQrRYOIV_X8rY8NHRGbUVNY"; 
 
 function getApiKey() {
-  // 1. Try LocalStorage (User Override)
   let key = localStorage.getItem('gemini_api_key');
-  
-  // 2. If no user key, use Hardcoded key
   if (!key || key.trim() === "") {
     key = HARDCODED_KEY;
-  }
-  
-  // 3. Last check
-  if (!key || key.trim() === "") {
-    alert("API Key missing! Please contact developer.");
-    return null;
   }
   return key;
 }
@@ -620,12 +611,16 @@ function closeModals(e) {
   document.getElementById('cameraInput').value = ''; 
 }
 
-/* --- Data Processing --- */
+/* --- Data Processing & Relay Lock --- */
+let manualLockActive = false;
+let manualLockTimer = null;
+
 function processData(data) {
-  const v = Number(data.voltage || 0);
-  const c = Number(data.current || 0);
-  const t = Number(data.temperature || 0);
-  const l = Number(data.leakage_current || 0);
+  // If data is null or flattened, normalize it
+  const v = Number(data.voltage ?? data.Voltage ?? data.V ?? 0);
+  const c = Number(data.current ?? data.Current ?? data.I ?? 0);
+  const t = Number(data.temperature ?? data.Temperature ?? data.temp ?? 0);
+  const l = Number(data.leakage_current ?? data.leakage ?? data.Leakage ?? 0);
 
   ui.v.el.textContent = v.toFixed(1);
   ui.c.el.textContent = c.toFixed(2);
@@ -654,9 +649,13 @@ function processData(data) {
     mainChartInstance.update('none');
   }
 
-  const rStat = data.relay_status || 'CLOSED';
-  const isOpen = (String(rStat).toUpperCase() === 'OPEN' || rStat == 1);
-  setRelayVisuals(isOpen);
+  // --- RELAY UPDATE LOGIC ---
+  if(!manualLockActive) {
+      // Check multiple possible key names for relay status
+      const rStat = data.relay_status ?? data.relay ?? data.Relay ?? 'CLOSED';
+      const isOpen = (String(rStat).toUpperCase() === 'OPEN' || rStat == 1 || rStat === '1');
+      setRelayVisuals(isOpen);
+  }
 }
 
 function checkFault(card, isFault) {
@@ -677,16 +676,49 @@ function setRelayVisuals(isOpen) {
   }
 }
 
+// RELAY BUTTON CLICK HANDLER (UPDATED to match working code logic)
 ui.relay.btn.addEventListener('click', () => {
   const isTripped = ui.relay.btn.classList.contains('tripped');
-  const nextState = !isTripped;
+  const nextState = !isTripped; // If currently Tripped (OPEN), next is ARMED (CLOSED)
+  const statusStr = nextState ? 'OPEN' : 'CLOSED';
+  
+  // 1. Optimistic UI Update
   setRelayVisuals(nextState);
-  db.ref('manual_controls/relay_status').set(nextState ? 'OPEN' : 'CLOSED');
+  
+  // 2. Lock UI update from incoming sensor data temporarily
+  manualLockActive = true;
+  if(manualLockTimer) clearTimeout(manualLockTimer);
+  manualLockTimer = setTimeout(() => { manualLockActive = false; }, 6000);
+
+  // 3. Dual Write (Matches working code structure)
+  // Write to 'manual_controls/relay_status' AND 'relay'
+  const updates = {};
+  updates['manual_controls/relay_status'] = statusStr;
+  updates['relay'] = nextState ? 1 : 0;
+
+  db.ref().update(updates)
+    .then(() => console.log("Write Success"))
+    .catch((error) => {
+        alert("Write Failed: " + error.message);
+        setRelayVisuals(isTripped); // Revert
+        manualLockActive = false;
+    });
 });
 
-db.ref('sensor_data').limitToLast(1).on('child_added', s => { 
+// Listener Logic (Robust handling for nested or flat data)
+const sensorRef = db.ref('sensor_data');
+sensorRef.limitToLast(1).on('child_added', s => { 
   if(s.val()) processData(s.val()); 
 });
+
+// Also listen to manual controls directly to keep UI in sync if changed elsewhere
+db.ref('manual_controls/relay_status').on('value', s => {
+    if(manualLockActive) return; // Don't override if user just clicked
+    const val = s.val();
+    const isOpen = (String(val).toUpperCase() === 'OPEN');
+    setRelayVisuals(isOpen);
+});
+
 </script>
 </body>
 </html>
