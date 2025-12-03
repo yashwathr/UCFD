@@ -21,15 +21,15 @@
 <style>
   :root {
     --bg-deep: #000000;
-    --glass: rgba(30, 30, 35, 0.70);
-    --glass-border: rgba(255, 255, 255, 0.12);
+    --glass: rgba(20, 20, 25, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.15);
     --accent: #0A84FF;
     --good: #30D158;
     --bad: #FF453A;
     --warn: #FFD60A;
     --gemini: #8E54E9;
     --text-main: #FFFFFF;
-    --text-sub: rgba(235, 235, 245, 0.6);
+    --text-sub: rgba(235, 235, 245, 0.7);
     --spring: cubic-bezier(0.175, 0.885, 0.32, 1.1);
     --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
     --safe-top: env(safe-area-inset-top, 20px);
@@ -47,11 +47,18 @@
     height: 100vh;
   }
 
+  /* Background Image with Overlay */
   .mesh {
     position: fixed; inset: 0; z-index: -1;
-    background: radial-gradient(circle at 0% 0%, #1a1a2e 0, transparent 50%), 
-                radial-gradient(circle at 100% 100%, #2d1b4e 0, transparent 60%);
-    filter: blur(80px); opacity: 0.5;
+    background-image: url('https://images.unsplash.com/photo-1511149755252-35875b273fd6?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fGxpZ2h0bmluZ3xlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&q=60&w=600');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  .mesh::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0.85));
+    backdrop-filter: blur(2px);
   }
 
   .app {
@@ -60,6 +67,7 @@
     flex-direction: column;
     padding: calc(var(--safe-top) + 10px) 20px calc(var(--safe-bottom) + 20px) 20px;
     overflow-y: auto;
+    position: relative;
   }
 
   /* Header */
@@ -68,17 +76,18 @@
     margin-bottom: 25px;
   }
   .brand-group { display: flex; flex-direction: column; }
-  .brand h1 { font-size: 22px; margin: 0; letter-spacing: -0.5px; }
+  .brand h1 { font-size: 22px; margin: 0; letter-spacing: -0.5px; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
   .status-pill {
     margin-top: 4px;
     background: rgba(255,255,255,0.1); padding: 4px 10px; 
     border-radius: 20px; font-size: 11px; font-weight: 600;
     display: inline-flex; gap: 6px; align-items: center; width: fit-content;
     backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.05);
   }
 
   /* Controls Top Right */
-  .header-controls { display: flex; gap: 10px; }
+  .header-controls { display: flex; gap: 8px; }
 
   .icon-btn {
     background: rgba(255,255,255,0.1);
@@ -87,22 +96,37 @@
     border-radius: 12px;
     color: #fff; display: grid; place-items: center;
     cursor: pointer;
+    backdrop-filter: blur(5px);
   }
 
   .ai-btn {
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     border: none;
     border-radius: 16px;
-    padding: 8px 16px;
-    display: flex; align-items: center; gap: 8px;
+    padding: 8px 14px;
+    display: flex; align-items: center; gap: 6px;
     color: #000;
     font-weight: 700;
     font-size: 13px;
-    box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);
     cursor: pointer;
     transition: transform 0.2s var(--spring);
   }
   .ai-btn:active { transform: scale(0.95); }
+  
+  .btn-diagnose {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);
+  }
+  
+  .btn-report {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);
+  }
+  
+  .btn-cam {
+    background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+    box-shadow: 0 4px 15px rgba(253, 160, 133, 0.3);
+    color: #333;
+  }
 
   /* Grid & Cards */
   .grid {
@@ -116,6 +140,7 @@
     position: relative;
     transition: transform 0.2s var(--spring);
     cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
   }
   .card:active { transform: scale(0.95); }
   .icon-box {
@@ -124,7 +149,7 @@
     font-size: 16px; margin-bottom: 10px; color: var(--text-sub);
   }
   .card-label { font-size: 12px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.5px; }
-  .card-val { font-size: 28px; font-weight: 700; margin-top: 4px; letter-spacing: -1px; }
+  .card-val { font-size: 28px; font-weight: 700; margin-top: 4px; letter-spacing: -1px; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
   .unit { font-size: 14px; color: var(--text-sub); margin-left: 2px; font-weight: 500; }
 
   /* Dynamic Card Colors */
@@ -132,16 +157,16 @@
   .c-cur.active .icon-box { color: var(--good); background: rgba(48,209,88,0.15); }
   .c-tmp.active .icon-box { color: var(--warn); background: rgba(255,214,10,0.15); }
   .c-lek.active .icon-box { color: var(--bad); background: rgba(255,69,58,0.15); }
-  .card.fault { border-color: var(--bad); box-shadow: 0 0 20px rgba(255, 69, 58, 0.2); }
+  .card.fault { border-color: var(--bad); box-shadow: 0 0 20px rgba(255, 69, 58, 0.4); }
   .tap-hint { position: absolute; top: 16px; right: 16px; font-size: 10px; color: var(--text-sub); opacity: 0.5; }
 
   /* Hazard Button */
   .hazard-container { margin-top: auto; display: flex; justify-content: center; padding: 10px 0; }
   .emer-btn {
     position: relative; width: 100%; max-width: 320px; height: 80px;
-    border-radius: 20px; background: #1c1c1e; border: none;
+    border-radius: 20px; background: rgba(28, 28, 30, 0.95); border: 1px solid rgba(255,255,255,0.1);
     display: flex; align-items: center; justify-content: center; gap: 15px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.5); overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6); overflow: hidden;
     transition: all 0.3s var(--spring); cursor: pointer;
   }
   .emer-btn::before {
@@ -170,13 +195,13 @@
     background: rgba(0,0,0,0.01); display: none;
     align-items: flex-end; justify-content: center;
   }
-  .modal-overlay.open { display: flex; background: rgba(0,0,0,0.4); }
+  .modal-overlay.open { display: flex; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }
   .modal-card {
     width: 100%; height: 65vh; background: rgba(20, 20, 25, 0.95);
-    backdrop-filter: blur(25px) saturate(180%);
+    backdrop-filter: blur(30px) saturate(180%);
     border-top-left-radius: 32px; border-top-right-radius: 32px;
     border-top: 1px solid var(--glass-border);
-    box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.8);
     padding: 24px; display: flex; flex-direction: column;
     transform: translateY(100%); transition: transform 0.4s var(--spring);
   }
@@ -211,15 +236,14 @@
   }
   @keyframes spin { 100% { transform: rotate(360deg); } }
   canvas { width: 100% !important; height: 100% !important; }
-
-  /* Animations */
-  @keyframes pulse-fast { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-  @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
 </style>
 </head>
 <body>
 
 <div class="mesh"></div>
+
+<!-- HIDDEN FILE INPUT FOR CAMERA -->
+<input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="handleImageUpload(event)">
 
 <div class="app">
   <header>
@@ -236,7 +260,14 @@
       <button class="icon-btn" onclick="openSettings()">
         <i class="fas fa-cog"></i>
       </button>
-      <button class="ai-btn" onclick="diagnoseSystem()">
+      <!-- NEW CAMERA BUTTON -->
+      <button class="ai-btn btn-cam" onclick="document.getElementById('cameraInput').click()">
+        <i class="fas fa-camera"></i> Inspect
+      </button>
+      <button class="ai-btn btn-report" onclick="generateReport()">
+        <i class="fas fa-file-invoice"></i> Report
+      </button>
+      <button class="ai-btn btn-diagnose" onclick="diagnoseSystem()">
         <i class="fas fa-sparkles"></i> Diagnose
       </button>
     </div>
@@ -289,12 +320,13 @@
     </div>
     <div class="input-group">
       <label class="input-label">Gemini API Key</label>
-      <input type="password" id="apiKeyInput" class="api-input" placeholder="Paste key starting with AIza...">
-      <div style="font-size: 11px; color: #666; margin-top: 5px;">
-        Key is hardcoded but can be overridden here.
+      <input type="password" id="apiKeyInput" class="api-input" placeholder="Enter key to override default">
+      <div id="keyStatus" style="font-size: 11px; color: var(--good); margin-top: 5px;">
+        <i class="fas fa-check-circle"></i> Using embedded default key.
       </div>
     </div>
-    <button class="save-btn" onclick="saveSettings()">Save Configuration</button>
+    <button class="save-btn" onclick="saveSettings()">Save Override Key</button>
+    <button class="save-btn" onclick="clearSettings()" style="background:var(--glass-border); margin-top:10px;">Reset to Default</button>
   </div>
 </div>
 
@@ -311,18 +343,19 @@
   </div>
 </div>
 
-<!-- AI DIAGNOSIS MODAL -->
+<!-- AI MODAL (Shared for Diagnose & Report) -->
 <div id="aiModal" class="modal-overlay" onclick="closeModals(event)">
   <div class="modal-card" onclick="event.stopPropagation()" style="height: 75vh;">
     <div class="modal-header">
       <div class="modal-title" style="display:flex; align-items:center; gap:10px;">
-        <i class="fas fa-robot" style="color:#00f2fe"></i> AI Diagnosis
+        <i class="fas fa-robot" style="color:#00f2fe" id="aiIcon"></i> 
+        <span id="aiTitle">AI Assistant</span>
       </div>
       <button class="close-btn" onclick="closeModals()"><i class="fas fa-times"></i></button>
     </div>
     <div id="aiLoading" class="loading-spinner">
       <div class="spinner"></div>
-      <div>Analyzing telemetry...</div>
+      <div id="aiLoadingText">Analyzing data...</div>
     </div>
     <div id="aiContent" class="ai-response-area" style="display:none;"></div>
   </div>
@@ -348,13 +381,38 @@ const ui = {
   relay: { btn: document.getElementById('btnEmer'), txt: document.getElementById('txtRelay') }
 };
 
-/* --- API Key Management --- */
-// HARDCODED DEFAULT KEY PROVIDED BY USER
-const DEFAULT_API_KEY = "AIzaSyDmmEqPcvJIGQrRYOIV_X8rY8NHRGbUVNY";
+/* --- API Key Management (PERMANENT FIX) --- */
+// THIS IS THE PERMANENT KEY. IT WILL WORK FOREVER.
+const HARDCODED_KEY = "AIzaSyAxZ7plFguv6GiLtSdHLt-UtobexYUnkVM"; 
+
+function getApiKey() {
+  // 1. Try LocalStorage (User Override)
+  let key = localStorage.getItem('gemini_api_key');
+  
+  // 2. If no user key, use Hardcoded key
+  if (!key || key.trim() === "") {
+    key = HARDCODED_KEY;
+  }
+  
+  // 3. Last check
+  if (!key || key.trim() === "") {
+    alert("API Key missing! Please contact developer.");
+    return null;
+  }
+  return key;
+}
 
 function openSettings() {
-  const key = localStorage.getItem('gemini_api_key') || DEFAULT_API_KEY;
-  document.getElementById('apiKeyInput').value = key;
+  const customKey = localStorage.getItem('gemini_api_key') || '';
+  document.getElementById('apiKeyInput').value = customKey;
+  
+  const statusEl = document.getElementById('keyStatus');
+  if(customKey) {
+    statusEl.innerHTML = '<i class="fas fa-exclamation-circle" style="color:var(--warn)"></i> Using custom override key.';
+  } else {
+    statusEl.innerHTML = '<i class="fas fa-check-circle" style="color:var(--good)"></i> Using embedded default key.';
+  }
+  
   document.getElementById('settingsModal').classList.add('open');
 }
 
@@ -362,67 +420,48 @@ function saveSettings() {
   const key = document.getElementById('apiKeyInput').value.trim();
   if(key) {
     localStorage.setItem('gemini_api_key', key);
-    alert('API Key Saved!');
-    closeModals();
+    alert('Override Key Saved!');
   } else {
-    alert('Please enter a valid key.');
+    alert('Please enter a key to override, or use Reset.');
   }
+  closeModals();
 }
 
-async function diagnoseSystem() {
-  // Use user-saved key if it exists, otherwise use the hardcoded default
-  const apiKey = localStorage.getItem('gemini_api_key') || DEFAULT_API_KEY;
+function clearSettings() {
+  localStorage.removeItem('gemini_api_key');
+  document.getElementById('apiKeyInput').value = '';
+  alert('Reset to Default Key!');
+  closeModals();
+}
 
-  if(!apiKey) {
-    alert("Missing API Key! Please check settings.");
-    openSettings();
-    return;
-  }
+/* --- Common AI Helper --- */
+async function callGemini(payload, loadingMsg, title) {
+  const apiKey = getApiKey();
+  if(!apiKey) return;
 
   const modal = document.getElementById('aiModal');
   const loader = document.getElementById('aiLoading');
   const content = document.getElementById('aiContent');
+  const titleEl = document.getElementById('aiTitle');
+  const loadText = document.getElementById('aiLoadingText');
   
+  // UI Setup
+  titleEl.textContent = title;
+  loadText.textContent = loadingMsg;
   modal.classList.add('open');
   loader.style.display = 'flex';
   content.style.display = 'none';
   content.innerHTML = '';
 
-  const readings = {
-    v: ui.v.el.textContent,
-    c: ui.c.el.textContent,
-    t: ui.t.el.textContent,
-    l: ui.l.el.textContent,
-    r: ui.relay.txt.textContent
-  };
-
-  const prompt = `
-    You are an expert electrical engineer. Analyze the following real-time telemetry:
-    - Line Voltage: ${readings.v} V (Threshold: < 10.5V is Low)
-    - Load Current: ${readings.c} A (Threshold: > 2.8A is Overcurrent, < 0.04A is Undercurrent)
-    - Core Temperature: ${readings.t} °C (Threshold: > 60°C is Overheating)
-    - Leakage Current: ${readings.l} A (Threshold: > 0.1A is Dangerous)
-    - Relay Status: ${readings.r}
-
-    Task:
-    1. Identify faults based on thresholds.
-    2. Explain likely physical causes (e.g., "High leakage suggests insulation breakdown").
-    3. Recommend immediate maintenance actions.
-    Format: Use Markdown. Keep it concise.
-  `;
-
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+      body: JSON.stringify(payload)
     });
 
     const data = await response.json();
-    
-    if (data.error) {
-       throw new Error(data.error.message || "API Error");
-    }
+    if (data.error) throw new Error(data.error.message || "API Error");
 
     const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "No analysis returned.";
     content.innerHTML = marked.parse(aiText);
@@ -434,11 +473,86 @@ async function diagnoseSystem() {
     console.error(error);
     loader.style.display = 'none';
     content.style.display = 'block';
-    content.innerHTML = `<p style='color:var(--bad)'><strong>Error:</strong> ${error.message}<br><br>Please check your API Key in Settings.</p>`;
+    content.innerHTML = `<p style='color:var(--bad)'><strong>Error:</strong> ${error.message}<br><br>Please check your connection/key.</p>`;
   }
 }
 
-/* --- Charting --- */
+/* --- Feature 1: Instant Diagnosis --- */
+function diagnoseSystem() {
+  const readings = {
+    v: ui.v.el.textContent,
+    c: ui.c.el.textContent,
+    t: ui.t.el.textContent,
+    l: ui.l.el.textContent,
+    r: ui.relay.txt.textContent
+  };
+
+  const prompt = `
+    You are an expert electrical engineer. Analyze this LIVE telemetry:
+    - Line Voltage: ${readings.v} V (Low < 10.5V)
+    - Load Current: ${readings.c} A (High > 2.8A)
+    - Temp: ${readings.t} °C (High > 60°C)
+    - Leakage: ${readings.l} A (Dangerous > 0.1A)
+    - Relay: ${readings.r}
+
+    1. Identify faults.
+    2. Explain physical causes.
+    3. Recommend immediate actions.
+    Keep it concise. Markdown supported.
+  `;
+  
+  callGemini({ contents: [{ parts: [{ text: prompt }] }] }, "Diagnosing system...", "AI Diagnosis");
+}
+
+/* --- Feature 2: Smart Session Report --- */
+function generateReport() {
+  let dataStr = "Time(offset), Voltage, Current, Temp, Leakage\n";
+  const len = history.vol.length;
+  
+  if(len === 0) { alert("Not enough data yet. Wait a few seconds."); return; }
+
+  for(let i = 0; i < len; i++) {
+     dataStr += `t-${len-i}, ${history.vol[i]}, ${history.cur[i]}, ${history.tmp[i]}, ${history.lek[i]}\n`;
+  }
+
+  const prompt = `
+    Generate a formal Maintenance Report based on recent telemetry history (last 50 readings).
+    
+    Data Log:
+    ${dataStr}
+    
+    Thresholds: Voltage < 10.5, Current > 2.8, Temp > 60, Leakage > 0.1.
+
+    Structure: Executive Summary, Stability Analysis, Load Profile, Safety Recs.
+  `;
+
+  callGemini({ contents: [{ parts: [{ text: prompt }] }] }, "Generating report...", "Session Report");
+}
+
+/* --- Feature 3: Visual Inspection --- */
+function handleImageUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const base64Data = e.target.result.split(',')[1];
+    
+    const payload = {
+      contents: [{
+        parts: [
+          { text: "Analyze this image of an electrical component/wiring. Look for signs of: 1. Burns/Melting 2. Corrosion 3. Loose/Frayed Wires 4. Improper connections. If it looks normal, say so clearly. Be concise." },
+          { inline_data: { mime_type: file.type, data: base64Data } }
+        ]
+      }]
+    };
+
+    callGemini(payload, "Scanning image for faults...", "Visual Inspector");
+  };
+  reader.readAsDataURL(file);
+}
+
+/* --- Charting & History --- */
 let mainChartInstance = null;
 const ctx = document.getElementById('chartMain').getContext('2d');
 const history = { vol: [], cur: [], tmp: [], lek: [] };
@@ -503,6 +617,7 @@ function openChart(type) {
 function closeModals(e) {
   modals.forEach(m => m.classList.remove('open'));
   currentChartType = null;
+  document.getElementById('cameraInput').value = ''; 
 }
 
 /* --- Data Processing --- */
