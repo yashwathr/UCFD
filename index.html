@@ -469,7 +469,7 @@
 <script>
 /* --- Init Firebase --- */
 const firebaseConfig = { 
-  databaseURL: "https://cablefaultdetection-77552-default-rtdb.firebaseio.com/" 
+  databaseURL: "https://ucfd-31619-default-rtdb.asia-southeast1.firebasedatabase.app/" 
 };
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
@@ -731,3 +731,4 @@ db.ref('manual_controls/relay_status').on('value', s => {
 </script>
 </body>
 </html>
+
